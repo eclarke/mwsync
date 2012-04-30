@@ -16,11 +16,11 @@ As a library, you will use __mwsync__ to build your own custom Sync programs. We
 
 To install __mwsync__ as a Maven module, follow the same instructions as above:
 
-	```bash
-    hg clone https://bitbucket.org/sulab/mwsync
-    cd mwsync
-    mvn install
-	```
+```bash
+hg clone https://bitbucket.org/sulab/mwsync
+cd mwsync
+mvn install
+```
     
 From Eclipse, you might alternatively import it as a Maven project, right-click the project folder, and choose "Run as -> Maven Install".
 
@@ -44,7 +44,7 @@ __To create a bare-bones, one-way mirror of a selection of pages on Wikipedia:__
 
 Basic Sync App:
 
-    ```java
+```java
     import edu.scripps.mwsync.*
     
     public class MySyncApp
@@ -55,7 +55,7 @@ Basic Sync App:
             sync.run();
         }
     }
-    ```
+```
 	
 Add the following directive to your `crontab` file (on *nix systems) to run every 5 minutes:
 
