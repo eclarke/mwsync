@@ -45,16 +45,16 @@ __To create a bare-bones, one-way mirror of a selection of pages on Wikipedia:__
 Basic Sync App:
 
 ```java
-    import edu.scripps.mwsync.*
-    
-    public class MySyncApp
+import edu.scripps.mwsync.*
+
+public class MySyncApp
+{
+    public static void main(String[] args) throws Exception
     {
-        public static void main(String[] args) throws Exception
-        {
-            Sync sync = Sync.newFromConfigFile("/etc/mysyncapp/sync.conf");
-            sync.run();
-        }
+        Sync sync = Sync.newFromConfigFile("/etc/mysyncapp/sync.conf");
+        sync.run();
     }
+}
 ```
 	
 Add the following directive to your `crontab` file (on *nix systems) to run every 5 minutes:
@@ -73,38 +73,38 @@ __To create a mirror that _alters content_ before posting to target:__
 
 Sync App with Custom Rewriter:
 
-    ```java
-    import edu.scripps.mwsync.*
-    import edu.scripps.genewiki.common.Wiki;
+```java
+import edu.scripps.mwsync.*
+import edu.scripps.genewiki.common.Wiki;
 
-    public class MySyncApp
+public class MySyncApp
+{
+    static class CustomRewriter implements Rewriter
     {
-        static class CustomRewriter implements Rewriter
+        /*
+         * Replace all instances of 'cats' with 'dogs'
+         */
+        public String process(String text, String title, Wiki source,
+            Wiki target)
         {
-            /*
-             * Replace all instances of 'cats' with 'dogs'
-             */
-            public String process(String text, String title, Wiki source,
-                Wiki target)
-            {
-                return text.replaceAll("cats", "dogs");
-            }
-        }
-        
-        public static void main(String[] args) 
-        {
-            try {
-                Sync sync = Sync.newFromConfigFile("/etc/mysyncapp/sync.conf");
-                CustomRewriter rewriter = new CustomRewriter();
-                sync.addRewriter(rewriter);
-                sync.run();
-            // of course, your error handling will be more specific...
-            catch (Exception e) {  
-                system.out.println("Problem running sync!");
-                system.exit(1)
+            return text.replaceAll("cats", "dogs");
         }
     }
-	```
+    
+    public static void main(String[] args) 
+    {
+        try {
+            Sync sync = Sync.newFromConfigFile("/etc/mysyncapp/sync.conf");
+            CustomRewriter rewriter = new CustomRewriter();
+            sync.addRewriter(rewriter);
+            sync.run();
+        // of course, your error handling will be more specific...
+        catch (Exception e) {  
+            system.out.println("Problem running sync!");
+            system.exit(1)
+    }
+}
+```
 	
 Running on a schedule:
 ---------------------
@@ -117,54 +117,54 @@ Below are some generic rewrite rules you may want to use if porting a MediaWiki 
 
 Appending a 'Mirrored' banner to each page:
     
-    ```java
-    public static String prependMirroredTemplate(String src){
-        if (src.startsWith("{{Mirrored")) {
-            return src;
-        } else {
-            return "{{Mirrored | {{PAGENAME}} }} \n" + src;
-        }
+```java
+public static String prependMirroredTemplate(String src){
+    if (src.startsWith("{{Mirrored")) {
+        return src;
+    } else {
+        return "{{Mirrored | {{PAGENAME}} }} \n" + src;
     }
-	```
+}
+```
 	
 Adding a semantic property to all links, except already-typed semantic links, category links, and namespaces, or, if a link does not exist on the source Wiki, making the link point back to Wikipedia:
 
-    ```java
-    public static String fixLinks(String src, Wiki target) {
-        
-        // add a marker to all the links so we can iterate through them (except the ones that point to wikipedia)
-        String src2 = src.replaceAll("\\[\\[(?!(wikipedia))", "[[%");
-        
-        try {
-            while (src2.contains("[[%")) {
-                
-                // extract the link text
-                int a = src2.indexOf("[[%")+3;  // left inner bound
-                int b = src2.indexOf("]]", a);  // right inner bound
-                String link = src2.substring(a, b);
-                
-                // remove the label, if present
-                int pipe = link.indexOf('|');
-                link = (pipe == -1) ? link : src2.substring(a, a+pipe);
+```java
+public static String fixLinks(String src, Wiki target) {
+    
+    // add a marker to all the links so we can iterate through them (except the ones that point to wikipedia)
+    String src2 = src.replaceAll("\\[\\[(?!(wikipedia))", "[[%");
+    
+    try {
+        while (src2.contains("[[%")) {
+            
+            // extract the link text
+            int a = src2.indexOf("[[%")+3;  // left inner bound
+            int b = src2.indexOf("]]", a);  // right inner bound
+            String link = src2.substring(a, b);
+            
+            // remove the label, if present
+            int pipe = link.indexOf('|');
+            link = (pipe == -1) ? link : src2.substring(a, a+pipe);
 
-                // If the link does not exist (and is not a semantic wikilink or category), append 'wikipedia:'
-                if (!link.contains("::") && !link.contains(":") && !link.contains("Category:") && !target.exists(link)[0]) {
-                    src2 = src2.substring(0, a-1) + "wikipedia:" + src2.substring(a);
-                // else if it's not a special link (like File: or en:), make it a semantic link
-                } else if (!link.contains(":")) {
-                    src2 = src2.substring(0, a-1) + "is_associated_with::" + src2.substring(a);
-                // otherwise just remove the marker and move on
-                } else {
-                    src2 = src2.substring(0, a-1) + src2.substring(a);
-                }
+            // If the link does not exist (and is not a semantic wikilink or category), append 'wikipedia:'
+            if (!link.contains("::") && !link.contains(":") && !link.contains("Category:") && !target.exists(link)[0]) {
+                src2 = src2.substring(0, a-1) + "wikipedia:" + src2.substring(a);
+            // else if it's not a special link (like File: or en:), make it a semantic link
+            } else if (!link.contains(":")) {
+                src2 = src2.substring(0, a-1) + "is_associated_with::" + src2.substring(a);
+            // otherwise just remove the marker and move on
+            } else {
+                src2 = src2.substring(0, a-1) + src2.substring(a);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return src;
         }
-        return src2;
+    } catch (IOException e) {
+        e.printStackTrace();
+        return src;
     }
-	```
+    return src2;
+}
+```
 
 To see the full suite of rewrite rules that we use for building genewiki+, visit [our gwsync repository](http://bitbucket.org/sulab/gwsync) and find the GeneWikiEditor class.
 
