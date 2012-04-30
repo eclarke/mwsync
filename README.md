@@ -16,10 +16,11 @@ As a library, you will use __mwsync__ to build your own custom Sync programs. We
 
 To install __mwsync__ as a Maven module, follow the same instructions as above:
 
-	:::bash
+	```bash
     hg clone https://bitbucket.org/sulab/mwsync
     cd mwsync
     mvn install
+	```
     
 From Eclipse, you might alternatively import it as a Maven project, right-click the project folder, and choose "Run as -> Maven Install".
 
@@ -43,7 +44,7 @@ __To create a bare-bones, one-way mirror of a selection of pages on Wikipedia:__
 
 Basic Sync App:
 
-    :::java
+    ```java
     import edu.scripps.mwsync.*
     
     public class MySyncApp
@@ -54,7 +55,8 @@ Basic Sync App:
             sync.run();
         }
     }
-    
+    ```
+	
 Add the following directive to your `crontab` file (on *nix systems) to run every 5 minutes:
 
     */5 * *   *   *   root  java -jar <PATH_TO_SYNC_JAR>/sync.jar
@@ -71,7 +73,7 @@ __To create a mirror that _alters content_ before posting to target:__
 
 Sync App with Custom Rewriter:
 
-    :::java
+    ```java
     import edu.scripps.mwsync.*
     import edu.scripps.genewiki.common.Wiki;
 
@@ -102,7 +104,8 @@ Sync App with Custom Rewriter:
                 system.exit(1)
         }
     }
-
+	```
+	
 Running on a schedule:
 ---------------------
 The Sync library itself does not handle repeated runs, so in order to maintain up-to-date data, you have to schedule it with your OS's task scheduler. The easiest is simply to use Unix `cron`, but alternatives exist.
@@ -114,7 +117,7 @@ Below are some generic rewrite rules you may want to use if porting a MediaWiki 
 
 Appending a 'Mirrored' banner to each page:
     
-    :::java
+    ```java
     public static String prependMirroredTemplate(String src){
         if (src.startsWith("{{Mirrored")) {
             return src;
@@ -122,10 +125,11 @@ Appending a 'Mirrored' banner to each page:
             return "{{Mirrored | {{PAGENAME}} }} \n" + src;
         }
     }
-
+	```
+	
 Adding a semantic property to all links, except already-typed semantic links, category links, and namespaces, or, if a link does not exist on the source Wiki, making the link point back to Wikipedia:
 
-    :::java
+    ```java
     public static String fixLinks(String src, Wiki target) {
         
         // add a marker to all the links so we can iterate through them (except the ones that point to wikipedia)
@@ -160,6 +164,7 @@ Adding a semantic property to all links, except already-typed semantic links, ca
         }
         return src2;
     }
+	```
 
 To see the full suite of rewrite rules that we use for building genewiki+, visit [our gwsync repository](http://bitbucket.org/sulab/gwsync) and find the GeneWikiEditor class.
 
