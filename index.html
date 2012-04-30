@@ -1,0 +1,220 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mwsync by eclarke</title>
+    
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Mwsync</h1>
+        <p>Java framework to create live mirrors of MediaWiki sites.</p>
+        <p class="view"><a href="https://github.com/eclarke/mwsync">View the Project on GitHub <small>eclarke/mwsync</small></a></p>
+        <ul>
+          <li><a href="https://github.com/eclarke/mwsync/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/eclarke/mwsync/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/eclarke/mwsync">Fork On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>mwsync-lib</h1>
+
+<h2>About</h2>
+
+<p><strong>mwsync</strong> is a framework for creating a live, one-way 'mirror' of one MediaWiki onto another. It can be used for anything from maintaining a live mirror of the entire English Wikipedia to integrating multiple MediaWiki sites into one.
+It was created as part of the <a href="http://genewikiplus.org">GeneWiki+</a> project, which takes the 10,400+ human gene pages on <a href="http://en.wikipedia.org">Wikipedia</a> and integrates them with a <a href="http://snpedia.com">mutation database</a> and an ontology of human diseases. We've extracted the core of that project for general use.</p>
+
+<h2>Dependencies</h2>
+
+<p>There are no dependencies! </p>
+
+<h2>Installation</h2>
+
+<p>As a library, you will use <strong>mwsync</strong> to build your own custom Sync programs. We recommend using it as a Maven dependency, but it's not necessary. Use of a Java IDE such as <a href="http://eclipse.org">Eclipse</a> with a Maven plugin can simplify things greatly.</p>
+
+<p>To install <strong>mwsync</strong> as a Maven module, follow the same instructions as above:</p>
+
+<div class="highlight">
+<pre>hg clone https://bitbucket.org/sulab/mwsync
+<span class="nb">cd </span>mwsync
+mvn install
+</pre>
+</div>
+
+
+<p>From Eclipse, you might alternatively import it as a Maven project, right-click the project folder, and choose "Run as -&gt; Maven Install".</p>
+
+<p>Alternatively, you may choose to export it as a .jar file if you do not wish to use Maven in your own projects. From Eclipse, choose Export -&gt; Jar File and follow the instructions provided.</p>
+
+<p>Finally, in your own projects, import the final product into your classpath.
+<strong>As a maven module:</strong>
+Find and add <code>edu.scripps.mwsync</code> as a Maven dependency
+<strong>As a standalone .jar file</strong>:
+In Eclipse, add mwsync.jar (or whatever you named it during export) to the Java Build Path (Project -&gt; Properties... Java Build Path)</p>
+
+<h2>Usage</h2>
+
+<p><strong>To create a bare-bones, one-way mirror of a selection of pages on Wikipedia:</strong></p>
+
+<ol>
+<li><p>Create an account on Wikipedia and add the selection of pages to your watchlist. One way to add a large number of pages at once is to generate a list of titles (one per line) and add them to the <a href="http://en.wikipedia.org/wiki/Special:EditWatchlist/raw">raw watchlist editor</a>. You can also do this programmatically using the API.</p></li>
+<li><p>With your account information for both Wikipedia and the target MediaWiki site you wish to use as a mirror, edit <code>mwsync.example.conf</code>, filling in the information for each field. Save this file as <code>mwsync.conf</code> somewhere on the filesystem. That location will be where temporary and log files are written, so ensure the permissions are correct.</p></li>
+<li><p>Create a new Java project (if using Eclipse) and ensure <strong>mwsync-lib</strong> is in your classpath and importable by your code. The code below builds a basic sync app:</p></li>
+</ol><p>Basic Sync App:</p>
+
+<div class="highlight">
+<pre><span class="kn">import</span> <span class="nn">edu.scripps.mwsync.*</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MySyncApp</span>
+<span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span>
+    <span class="o">{</span>
+        <span class="n">Sync</span> <span class="n">sync</span> <span class="o">=</span> <span class="n">Sync</span><span class="o">.</span><span class="na">newFromConfigFile</span><span class="o">(</span><span class="s">"/etc/mysyncapp/sync.conf"</span><span class="o">);</span>
+        <span class="n">sync</span><span class="o">.</span><span class="na">run</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+</div>
+
+
+<p>Add the following directive to your <code>crontab</code> file (on *nix systems) to run every 5 minutes:</p>
+
+<pre><code>*/5 * *   *   *   root  java -jar &lt;PATH_TO_SYNC_JAR&gt;/sync.jar
+</code></pre>
+
+<p>For Windows, use Scheduled Tasks or the <code>at</code> command.</p>
+
+<p><strong>To create a mirror that <em>alters content</em> before posting to target:</strong></p>
+
+<ol>
+<li><p>Follow the directions as above to set up your accounts.</p></li>
+<li><p>Create a class that implements the Rewriter interface (see example below)</p></li>
+<li><p>Attach your custom Rewriter object to the Sync object, then run.</p></li>
+</ol><p>Sync App with Custom Rewriter:</p>
+
+<div class="highlight">
+<pre><span class="kn">import</span> <span class="nn">edu.scripps.mwsync.*</span>
+<span class="kn">import</span> <span class="nn">edu.scripps.genewiki.common.Wiki</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MySyncApp</span>
+<span class="o">{</span>
+    <span class="kd">static</span> <span class="kd">class</span> <span class="nc">CustomRewriter</span> <span class="kd">implements</span> <span class="n">Rewriter</span>
+    <span class="o">{</span>
+        <span class="cm">/*</span>
+<span class="cm">         * Replace all instances of 'cats' with 'dogs'</span>
+<span class="cm">         */</span>
+        <span class="kd">public</span> <span class="n">String</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">text</span><span class="o">,</span> <span class="n">String</span> <span class="n">title</span><span class="o">,</span> <span class="n">Wiki</span> <span class="n">source</span><span class="o">,</span>
+            <span class="n">Wiki</span> <span class="n">target</span><span class="o">)</span>
+        <span class="o">{</span>
+            <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="na">replaceAll</span><span class="o">(</span><span class="s">"cats"</span><span class="o">,</span> <span class="s">"dogs"</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> 
+    <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">Sync</span> <span class="n">sync</span> <span class="o">=</span> <span class="n">Sync</span><span class="o">.</span><span class="na">newFromConfigFile</span><span class="o">(</span><span class="s">"/etc/mysyncapp/sync.conf"</span><span class="o">);</span>
+            <span class="n">CustomRewriter</span> <span class="n">rewriter</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CustomRewriter</span><span class="o">();</span>
+            <span class="n">sync</span><span class="o">.</span><span class="na">addRewriter</span><span class="o">(</span><span class="n">rewriter</span><span class="o">);</span>
+            <span class="n">sync</span><span class="o">.</span><span class="na">run</span><span class="o">();</span>
+        <span class="c1">// of course, your error handling will be more specific...</span>
+        <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>  
+            <span class="n">system</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Problem running sync!"</span><span class="o">);</span>
+            <span class="n">system</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+</div>
+
+
+<h2>Running on a schedule:</h2>
+
+<p>The Sync library itself does not handle repeated runs, so in order to maintain up-to-date data, you have to schedule it with your OS's task scheduler. The easiest is simply to use Unix <code>cron</code>, but alternatives exist.
+The sync checks for the last time it was run. If it can't find a previous time, it skips back a day and pulls all changes since that time. To force this reset, delete <em>lastChecked.cal.ser</em> in the mwsync folder.</p>
+
+<h2>Common Rewrite Rules</h2>
+
+<p>Below are some generic rewrite rules you may want to use if porting a MediaWiki site to a Semantic MediaWiki mirror:</p>
+
+<p>Appending a 'Mirrored' banner to each page:</p>
+
+<div class="highlight">
+<pre><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="nf">prependMirroredTemplate</span><span class="o">(</span><span class="n">String</span> <span class="n">src</span><span class="o">){</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">src</span><span class="o">.</span><span class="na">startsWith</span><span class="o">(</span><span class="s">"{{Mirrored"</span><span class="o">))</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">src</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="s">"{{Mirrored | {{PAGENAME}} }} \n"</span> <span class="o">+</span> <span class="n">src</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre>
+</div>
+
+
+<p>Adding a semantic property to all links, except already-typed semantic links, category links, and namespaces, or, if a link does not exist on the source Wiki, making the link point back to Wikipedia:</p>
+
+<div class="highlight">
+<pre><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="nf">fixLinks</span><span class="o">(</span><span class="n">String</span> <span class="n">src</span><span class="o">,</span> <span class="n">Wiki</span> <span class="n">target</span><span class="o">)</span> <span class="o">{</span>
+
+    <span class="c1">// add a marker to all the links so we can iterate through them (except the ones that point to wikipedia)</span>
+    <span class="n">String</span> <span class="n">src2</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="na">replaceAll</span><span class="o">(</span><span class="s">"\\[\\[(?!(wikipedia))"</span><span class="o">,</span> <span class="s">"[[%"</span><span class="o">);</span>
+
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="k">while</span> <span class="o">(</span><span class="n">src2</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="s">"[[%"</span><span class="o">))</span> <span class="o">{</span>
+
+            <span class="c1">// extract the link text</span>
+            <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="n">src2</span><span class="o">.</span><span class="na">indexOf</span><span class="o">(</span><span class="s">"[[%"</span><span class="o">)+</span><span class="mi">3</span><span class="o">;</span>  <span class="c1">// left inner bound</span>
+            <span class="kt">int</span> <span class="n">b</span> <span class="o">=</span> <span class="n">src2</span><span class="o">.</span><span class="na">indexOf</span><span class="o">(</span><span class="s">"]]"</span><span class="o">,</span> <span class="n">a</span><span class="o">);</span>  <span class="c1">// right inner bound</span>
+            <span class="n">String</span> <span class="n">link</span> <span class="o">=</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">);</span>
+
+            <span class="c1">// remove the label, if present</span>
+            <span class="kt">int</span> <span class="n">pipe</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="na">indexOf</span><span class="o">(</span><span class="sc">'|'</span><span class="o">);</span>
+            <span class="n">link</span> <span class="o">=</span> <span class="o">(</span><span class="n">pipe</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">?</span> <span class="n">link</span> <span class="o">:</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">a</span><span class="o">+</span><span class="n">pipe</span><span class="o">);</span>
+
+            <span class="c1">// If the link does not exist (and is not a semantic wikilink or category), append 'wikipedia:'</span>
+            <span class="k">if</span> <span class="o">(!</span><span class="n">link</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="s">"::"</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">link</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="s">":"</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">link</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="s">"Category:"</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">target</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">link</span><span class="o">)[</span><span class="mi">0</span><span class="o">])</span> <span class="o">{</span>
+                <span class="n">src2</span> <span class="o">=</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">"wikipedia:"</span> <span class="o">+</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">a</span><span class="o">);</span>
+            <span class="c1">// else if it's not a special link (like File: or en:), make it a semantic link</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!</span><span class="n">link</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="s">":"</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">src2</span> <span class="o">=</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">"is_associated_with::"</span> <span class="o">+</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">a</span><span class="o">);</span>
+            <span class="c1">// otherwise just remove the marker and move on</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">src2</span> <span class="o">=</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="n">src2</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">a</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="k">return</span> <span class="n">src</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">src2</span><span class="o">;</span>
+<span class="o">}</span>
+</pre>
+</div>
+
+
+<p>To see the full suite of rewrite rules that we use for building genewiki+, visit <a href="http://bitbucket.org/sulab/gwsync">our gwsync repository</a> and find the GeneWikiEditor class.</p>
+
+<h2>Bugs and Errata</h2>
+
+<p>The included MediaWiki Java API has been forked and customized to use the SMW Ask API extension. Note, however, that this is not identical to the Ask API incorporated into Semantic Mediawiki &gt; 1.7. To adapt the Wiki class, update the "ask" functions to use '&amp;query=' instead of '&amp;q=' (and possibly other changes... we haven't upgraded to 1.7 yet so this is untested.)</p>
+
+<h2>Contact</h2>
+
+<p>Please feel free to email the developer for support or questions at eclarke \at\ scripps \dot\ edu.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/eclarke">eclarke</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
