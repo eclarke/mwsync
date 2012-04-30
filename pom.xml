@@ -1,0 +1,27 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>edu.scripps</groupId>
+  <artifactId>mwsync</artifactId>
+  <packaging>jar</packaging>
+
+  <name>mediawiki-sync</name>
+  <version>1.0</version>
+  <description>A framework to build a one-way mirror of one MediaWiki instance to another.</description>
+  <url>http://bitbucket.org/sulab/mwsync</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+    	<groupId>junit</groupId>
+    	<artifactId>junit</artifactId>
+    	<version>4.10</version>
+    	<type>jar</type>
+    	<scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
